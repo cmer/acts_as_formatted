@@ -1,0 +1,124 @@
+-------------------------------------------------------------------------------
+ acts_as_formatted 0.3 (November 21, 2006)
+ by Carl Mercier (carl [at] carlmercier.com)
+
+ Adapted from ForceUppercase, as found at 
+ http://wiki.rubyonrails.org/rails/pages/ForceUppercase+Plugin
+ 
+ v0.1 (11/1/2006)   :   initial release
+ v0.2 (11/20/2006)  :   bug fixes and capitalize_words added
+ v0.3 (11/21/2006)  :   code & doc refactoring, added possibility to call 
+                        acts_as_formatted more than once on the same model
+-------------------------------------------------------------------------------
+
+[ - Overview ---------------------------------------------------------------- ]
+
+acts_as_formatted is a plugin that provides basic formatting capabilities to 
+all ActiveRecord column objects of type :string or :text, as long as they have 
+content (nil values will remain nil).
+
+The determination is made by querying all the columns of the AR model's class 
+for their type. Note that SQLite returns type :string for SQL columns of type 
+CHAR, VARCHAR, and TEXT.
+
+
+
+[ - Installation ------------------------------------------------------------ ]
+
+To install the acts_as_formatted plugin into a current Rails application, run
+the script/plugin script from the root of our application passing it the URL 
+of svn://rubyforge.org//var/svn/actsasformatted.
+
+For example:
+script/plugin install -x svn://rubyforge.org/var/svn/actsasformatted
+
+To upgrade from a previous version:
+script/plugin install -x svn://rubyforge.org/var/svn/actsasformatted --force
+
+Once installed you will need to restart your web server for the plugin to be 
+loaded into the Rails environment.
+
+
+
+[ - Syntax ------------------------------------------------------------------ ]
+
+The syntax is easy. Simply add a class method to your ActiveRecord class 
+definition as follows:
+
+  acts_as_formatted optional_arguments
+
+where optional_arguments is one or more of the following options, separated 
+by commas (,):
+  
+  :include_text => true|false  - Indicates whether or not to format columns 
+                                 of type TEXT (note SQLite limitation described
+                                 above)
+
+  :only => column_definition   - Indicates that only the specified columns 
+                                 should be formatted
+
+  :except => column_definition - Indicates that all :string columns EXCEPT for 
+                                 the ones included in this option should be
+                                 formatted (this will not format columns of 
+                                 type TEXT unless the :include_text option is
+                                 included)
+
+  :case => :up|:down|:swap|:capitalize:capitalize_words|:none    
+                                 Indicates which type of casing to apply to the
+                                 text (default is none)
+    
+  :strip => true|false         - Indicates whether or not to remove leading and
+                                 trailing white spaces (default is true)
+    
+  where column_definition is a column name or an array of column names
+
+
+
+[ - Usage ------------------------------------------------------------------- ]
+
+To format all columns of type string to uppercase and remove white spaces:
+
+  class Person < ActiveRecord::Base
+    acts_as_formatted :case => :up
+  end
+
+
+To capitalize words of all columns of type string AND text:
+
+  class Person < ActiveRecord::Base
+    acts_as_formatted :include_text => true, :case => :capitalize_words
+  end
+
+
+To format only certain columns (it will verify that the columns are of type 
+:string or :text).  If the :age column is an integer, it will be ignored
+silently:
+
+  class Person < ActiveRecord::Base
+    acts_as_formatted, :only => [ :first_name, :last_name, :age ], 
+                       :strip => false, :case => :capitalize_words
+  end
+  
+
+To format all but certain columns (not including TEXT column types):
+
+  class Person < ActiveRecord::Base
+    acts_as_formatted, :except => [ :title, :suffix ], :case => :up
+  end
+
+
+As of version 0.3, acts_as_formatted can be called more than once in the same
+model:
+
+  class Person < ActiveRecord::Base
+    acts_as_formatted :only => [:first_name, :last_name], 
+                      :case => :capitalize_words
+
+    acts_as_formatted :only => :email, 
+                      :case => :down
+
+    acts_as_formatted :only => :gender, 
+                      :case => :up,
+                      :strip => false
+  end
+
